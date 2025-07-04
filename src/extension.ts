@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
 import sortAliases from "./sort-aliases";
+import { minimatch } from "minimatch";
 
 export function activate(context: vscode.ExtensionContext) {
   const willSaveDisposable = vscode.workspace.onWillSaveTextDocument(
     (event) => {
       const document = event.document;
-      if (
-        document.languageId !== "elixir" &&
-        !document.fileName.endsWith(".ex")
-      ) {
+      const config = vscode.workspace.getConfiguration("elixirAliasAutosorter");
+      const includeGlob = config.get<string>("includeGlob", "**/*.ex");
+      if (!minimatch(document.fileName, includeGlob)) {
         return;
       }
 

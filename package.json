@@ -14,7 +14,19 @@
     "onLanguage:elixir"
   ],
   "main": "./out/extension.js",
-  "contributes": {},
+  "contributes": {
+    "configuration": {
+      "title": "Elixir Alias Autosorter",
+      "type": "object",
+      "properties": {
+        "elixirAliasAutosorter.includeGlob": {
+          "type": "string",
+          "default": "**/*.ex",
+          "description": "Glob pattern for files that autosorting will be applied to. Example: **/{lib,test}/**/*.{ex,exs}"
+        }
+      }
+    }
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -35,5 +47,8 @@
     "eslint": "^9.25.1",
     "prettier": "3.6.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "minimatch": "^10.0.3"
   }
 }

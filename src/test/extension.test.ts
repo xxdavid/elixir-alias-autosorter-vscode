@@ -80,4 +80,49 @@ suite("extension", () => {
     // Clean up
     fs.unlinkSync(filePath);
   });
+
+  test("does not sort if file does not match includeGlob", async () => {
+    const unsorted = dedent`
+      defmodule MyApp.MyModule do
+          alias B
+          alias A
+      end
+    `;
+    // Write the unsorted content to a temp file with a unique name
+    const tmpDir = require("os").tmpdir();
+    const filePath = path.join(tmpDir, `elixir_alias_test_${Date.now()}.ex`);
+    require("fs").writeFileSync(filePath, unsorted, "utf8");
+
+    // Set the includeGlob to something that does NOT match the file
+    await vscode.workspace
+      .getConfiguration("elixirAliasAutosorter")
+      .update(
+        "includeGlob",
+        "**/shouldnotmatch/**/*.ex",
+        vscode.ConfigurationTarget.Global,
+      );
+
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(document);
+
+    vscode.extensions
+      .getExtension("dpavlik.elixir-alias-autosorter-vscode")!
+      .activate();
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    vscode.commands.executeCommand("workbench.action.files.save");
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // The file should remain unsorted
+    assert.strictEqual(document.getText(), unsorted);
+
+    require("fs").unlinkSync(filePath);
+
+    // Reset the config
+    await vscode.workspace
+      .getConfiguration("elixirAliasAutosorter")
+      .update("includeGlob", undefined, vscode.ConfigurationTarget.Global);
+  });
 });
