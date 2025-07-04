@@ -14,14 +14,7 @@
     "onLanguage:elixir"
   ],
   "main": "./out/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "elixir-alias-autosorter-vscode.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
+  "contributes": {},
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -38,6 +31,7 @@
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
+    "dedent": "^1.6.0",
     "eslint": "^9.25.1",
     "prettier": "3.6.2",
     "typescript": "^5.8.3"

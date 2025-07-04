@@ -1,15 +1,83 @@
 import * as assert from "assert";
+import dedent from "dedent";
+import * as fs from "fs";
+import * as path from "path";
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import * as vscode from "vscode";
 // import * as myExtension from '../../extension';
 
-suite("Extension Test Suite", () => {
+suite("extension", () => {
   vscode.window.showInformationMessage("Start all tests.");
+  test("sorts aliases on save", async () => {
+    const unsorted = dedent`
+      defmodule MyApp.MyModule do
+          @moduledoc "This is my great module."
 
-  test("Sample test", () => {
-    assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-    assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+          alias Inspect.Opts
+          alias MyApp.Application
+          alias Inspect.Algebra
+          alias IO.ANSI
+          alias Plug.Conn
+          alias Phoenix.Controller
+          alias IO.Stream
+
+          require Logger
+
+          import Code.Fragment
+
+          def do_something do
+              :ok
+          end
+      end
+    `;
+    const expectedSorted = dedent`
+      defmodule MyApp.MyModule do
+          @moduledoc "This is my great module."
+
+          alias Inspect.Algebra
+          alias Inspect.Opts
+          alias IO.ANSI
+          alias IO.Stream
+          alias MyApp.Application
+          alias Phoenix.Controller
+          alias Plug.Conn
+
+          require Logger
+
+          import Code.Fragment
+
+          def do_something do
+              :ok
+          end
+      end
+    `;
+
+    // Write the unsorted content to a temp file
+    const tmpDir = require("os").tmpdir();
+    const filePath = path.join(tmpDir, `elixir_alias_test_${Date.now()}.ex`);
+    fs.writeFileSync(filePath, unsorted, "utf8");
+
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(document);
+
+    vscode.extensions
+      .getExtension("dpavlik.elixir-alias-autosorter-vscode")!
+      .activate();
+
+    // Wait for the activation
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Save the document to trigger the extension
+    vscode.commands.executeCommand("workbench.action.files.save");
+
+    // Wait for the extension to process
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    assert.strictEqual(document.getText(), expectedSorted);
+
+    // Clean up
+    fs.unlinkSync(filePath);
   });
 });
