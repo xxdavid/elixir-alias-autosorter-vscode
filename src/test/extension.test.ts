@@ -125,4 +125,76 @@ suite("extension", () => {
       .getConfiguration("elixirAliasAutosorter")
       .update("includeGlob", undefined, vscode.ConfigurationTarget.Global);
   });
+
+  test("sorts aliases with command", async () => {
+    const unsorted = dedent`
+      defmodule MyApp.MyModule do
+          @moduledoc "This is my great module."
+
+          alias Inspect.Opts
+          alias MyApp.Application
+          alias Inspect.Algebra
+          alias IO.ANSI
+          alias Plug.Conn
+          alias Phoenix.Controller
+          alias IO.Stream
+
+          require Logger
+
+          import Code.Fragment
+
+          def do_something do
+              :ok
+          end
+      end
+    `;
+    const expectedSorted = dedent`
+      defmodule MyApp.MyModule do
+          @moduledoc "This is my great module."
+
+          alias Inspect.Algebra
+          alias Inspect.Opts
+          alias IO.ANSI
+          alias IO.Stream
+          alias MyApp.Application
+          alias Phoenix.Controller
+          alias Plug.Conn
+
+          require Logger
+
+          import Code.Fragment
+
+          def do_something do
+              :ok
+          end
+      end
+    `;
+
+    // Write the unsorted content to a temp file
+    const tmpDir = require("os").tmpdir();
+    const filePath = path.join(tmpDir, `elixir_alias_test_${Date.now()}.ex`);
+    fs.writeFileSync(filePath, unsorted, "utf8");
+
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(document);
+
+    vscode.extensions
+      .getExtension("dpavlik.elixir-alias-autosorter-vscode")!
+      .activate();
+
+    // Wait for the activation
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Execute the sort command
+    await vscode.commands.executeCommand("elixirAliasAutosorter.sortAliases");
+
+    // Wait for the command to process
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    assert.strictEqual(document.getText(), expectedSorted);
+
+    // Clean up
+    fs.unlinkSync(filePath);
+  });
+
 });

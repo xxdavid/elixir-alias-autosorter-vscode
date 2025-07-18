@@ -19,7 +19,34 @@ export function activate(context: vscode.ExtensionContext) {
       }
     },
   );
-  context.subscriptions.push(willSaveDisposable);
+
+  const sortCommand = vscode.commands.registerCommand(
+    "elixirAliasAutosorter.sortAliases",
+    () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showWarningMessage("No active editor found");
+        return;
+      }
+
+      const document = editor.document;
+      const text = document.getText();
+      const edits = sortAliases(text);
+
+      if (edits.length === 0) {
+        vscode.window.showInformationMessage("No aliases to sort");
+        return;
+      }
+
+      editor.edit((editBuilder) => {
+        for (const edit of edits) {
+          editBuilder.replace(edit.range, edit.newText);
+        }
+      });
+    },
+  );
+
+  context.subscriptions.push(willSaveDisposable, sortCommand);
 }
 
 export function deactivate() {}
