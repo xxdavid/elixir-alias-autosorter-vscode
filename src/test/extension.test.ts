@@ -197,4 +197,115 @@ suite("extension", () => {
     fs.unlinkSync(filePath);
   });
 
+  test("does not sort aliases on save when sortOnSave is disabled", async () => {
+    const unsorted = dedent`
+      defmodule MyApp.MyModule do
+          alias Inspect.Opts
+          alias MyApp.Application
+          alias Inspect.Algebra
+          alias IO.ANSI
+          alias Plug.Conn
+          alias Phoenix.Controller
+          alias IO.Stream
+      end
+    `;
+
+    // Write the unsorted content to a temp file
+    const tmpDir = require("os").tmpdir();
+    const filePath = path.join(tmpDir, `elixir_alias_test_${Date.now()}.ex`);
+    fs.writeFileSync(filePath, unsorted, "utf8");
+
+    // Disable sorting on save
+    await vscode.workspace
+      .getConfiguration("elixirAliasAutosorter")
+      .update("sortOnSave", false, vscode.ConfigurationTarget.Global);
+
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(document);
+
+    vscode.extensions
+      .getExtension("dpavlik.elixir-alias-autosorter-vscode")!
+      .activate();
+
+    // Wait for the activation
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Save the document - this should NOT trigger sorting
+    vscode.commands.executeCommand("workbench.action.files.save");
+
+    // Wait for the extension to process
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // The file should remain unsorted
+    assert.strictEqual(document.getText(), unsorted);
+
+    // Clean up
+    fs.unlinkSync(filePath);
+
+    // Reset the config
+    await vscode.workspace
+      .getConfiguration("elixirAliasAutosorter")
+      .update("sortOnSave", undefined, vscode.ConfigurationTarget.Global);
+  });
+
+  test("sorts aliases on save when sortOnSave is explicitly enabled", async () => {
+    const unsorted = dedent`
+      defmodule MyApp.MyModule do
+          alias Inspect.Opts
+          alias MyApp.Application
+          alias Inspect.Algebra
+          alias IO.ANSI
+          alias Plug.Conn
+          alias Phoenix.Controller
+          alias IO.Stream
+      end
+    `;
+    const expectedSorted = dedent`
+      defmodule MyApp.MyModule do
+          alias Inspect.Algebra
+          alias Inspect.Opts
+          alias IO.ANSI
+          alias IO.Stream
+          alias MyApp.Application
+          alias Phoenix.Controller
+          alias Plug.Conn
+      end
+    `;
+
+    // Write the unsorted content to a temp file
+    const tmpDir = require("os").tmpdir();
+    const filePath = path.join(tmpDir, `elixir_alias_test_${Date.now()}.ex`);
+    fs.writeFileSync(filePath, unsorted, "utf8");
+
+    // Explicitly enable sorting on save
+    await vscode.workspace
+      .getConfiguration("elixirAliasAutosorter")
+      .update("sortOnSave", true, vscode.ConfigurationTarget.Global);
+
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await vscode.window.showTextDocument(document);
+
+    vscode.extensions
+      .getExtension("dpavlik.elixir-alias-autosorter-vscode")!
+      .activate();
+
+    // Wait for the activation
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Save the document to trigger the extension
+    vscode.commands.executeCommand("workbench.action.files.save");
+
+    // Wait for the extension to process
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    assert.strictEqual(document.getText(), expectedSorted);
+
+    // Clean up
+    fs.unlinkSync(filePath);
+
+    // Reset the config
+    await vscode.workspace
+      .getConfiguration("elixirAliasAutosorter")
+      .update("sortOnSave", undefined, vscode.ConfigurationTarget.Global);
+  });
 });

@@ -25,6 +25,11 @@
       "title": "Elixir Alias Autosorter",
       "type": "object",
       "properties": {
+        "elixirAliasAutosorter.sortOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sort aliases automatically when saving a file. If turned off, aliases will be sorted only when running the 'Sort Elixir Aliases in File' command."
+        },
         "elixirAliasAutosorter.includeGlob": {
           "type": "string",
           "default": "**/*.ex",

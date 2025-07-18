@@ -7,6 +7,12 @@ export function activate(context: vscode.ExtensionContext) {
     (event) => {
       const document = event.document;
       const config = vscode.workspace.getConfiguration("elixirAliasAutosorter");
+      const sortOnSave = config.get<boolean>("sortOnSave", true);
+
+      if (!sortOnSave) {
+        return;
+      }
+
       const includeGlob = config.get<string>("includeGlob", "**/*.ex");
       if (!minimatch(document.fileName, includeGlob)) {
         return;
