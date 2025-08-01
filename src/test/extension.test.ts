@@ -148,12 +148,14 @@ class TestHelper {
     // Clean up any files and folders in the workspace
     const workspaceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
     try {
-      fs.readdirSync(workspaceDir).forEach((file) => {
-        fs.rmSync(path.join(workspaceDir, file), {
-          recursive: true,
-          force: true,
+      fs.readdirSync(workspaceDir)
+        .filter((file) => file !== ".gitkeep")
+        .forEach((file) => {
+          fs.rmSync(path.join(workspaceDir, file), {
+            recursive: true,
+            force: true,
+          });
         });
-      });
     } catch (error) {
       // Ignore cleanup errors
     }
