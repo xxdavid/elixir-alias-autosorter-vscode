@@ -59,8 +59,5 @@
     "prettier": "3.6.2",
     "typescript": "^5.8.3"
   },
-  "dependencies": {
-    "minimatch": "^10.0.3"
-  },
   "icon": "icon.png"
 }

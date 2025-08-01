@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import sortAliases from "./sort-aliases";
-import { minimatch } from "minimatch";
 
 export function activate(context: vscode.ExtensionContext) {
   const willSaveDisposable = vscode.workspace.onWillSaveTextDocument(
@@ -14,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       const includeGlob = config.get<string>("includeGlob", "**/*.ex");
-      if (!minimatch(document.fileName, includeGlob)) {
+      if (vscode.languages.match({ pattern: includeGlob }, document) === 0) {
         return;
       }
 
