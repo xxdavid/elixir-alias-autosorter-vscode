@@ -10,6 +10,10 @@
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xxdavid/elixir-alias-autosorter-vscode"
+  },
   "activationEvents": [
     "onLanguage:elixir"
   ],
