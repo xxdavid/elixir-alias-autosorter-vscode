@@ -83,25 +83,24 @@ const TEST_DATA = {
 
 // Test utilities
 class TestHelper {
-  private tempFiles: string[] = [];
   private configBackup: Map<string, any> = new Map();
 
-  async createTempFile(
+  async createWorkspaceWithFile(
     content: string,
-  ): Promise<{ filePath: string; document: vscode.TextDocument }> {
-    const tmpDir = require("os").tmpdir();
-    const filePath = path.join(
-      tmpDir,
-      `elixir_alias_test_${Date.now()}_${Math.random().toString(36).slice(2, 11)}.ex`,
-    );
+  ): Promise<{ document: vscode.TextDocument }> {
+    const workspaceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
 
+    const filePath = path.join(
+      workspaceDir,
+      `lib/elixir_alias_test/test_file.ex`,
+    );
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content, "utf8");
-    this.tempFiles.push(filePath);
 
     const document = await vscode.workspace.openTextDocument(filePath);
     await vscode.window.showTextDocument(document);
 
-    return { filePath, document };
+    return { document };
   }
 
   async setConfig(key: string, value: any): Promise<void> {
@@ -144,17 +143,20 @@ class TestHelper {
   }
 
   async cleanup(): Promise<void> {
-    // Clean up temp files
-    for (const filePath of this.tempFiles) {
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch (error) {
-        console.warn(`Failed to delete temp file ${filePath}:`, error);
-      }
+    await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+
+    // Clean up any files and folders in the workspace
+    const workspaceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
+    try {
+      fs.readdirSync(workspaceDir).forEach((file) => {
+        fs.rmSync(path.join(workspaceDir, file), {
+          recursive: true,
+          force: true,
+        });
+      });
+    } catch (error) {
+      // Ignore cleanup errors
     }
-    this.tempFiles = [];
 
     // Restore config
     for (const [key, value] of this.configBackup) {
@@ -178,7 +180,7 @@ suite("extension", () => {
   });
 
   test("sorts aliases on save", async () => {
-    const { document } = await helper.createTempFile(
+    const { document } = await helper.createWorkspaceWithFile(
       TEST_DATA.COMPLEX_UNSORTED,
     );
     await helper.ensureExtensionActive();
@@ -187,8 +189,21 @@ suite("extension", () => {
     assert.strictEqual(document.getText(), TEST_DATA.COMPLEX_SORTED);
   });
 
+  test("sorts aliases with a specific glob", async () => {
+    const { document } = await helper.createWorkspaceWithFile(
+      TEST_DATA.COMPLEX_UNSORTED,
+    );
+
+    await helper.setConfig("includeGlob", "{config,lib,test}/**/*.{ex,exs}");
+
+    await helper.ensureExtensionActive();
+    await helper.triggerSave();
+
+    assert.strictEqual(document.getText(), TEST_DATA.COMPLEX_SORTED);
+  });
+
   test("does not sort if file does not match includeGlob", async () => {
-    const { document } = await helper.createTempFile(
+    const { document } = await helper.createWorkspaceWithFile(
       TEST_DATA.MINIMAL_UNSORTED,
     );
 
@@ -203,7 +218,7 @@ suite("extension", () => {
   });
 
   test("sorts aliases with command", async () => {
-    const { document } = await helper.createTempFile(
+    const { document } = await helper.createWorkspaceWithFile(
       TEST_DATA.COMPLEX_UNSORTED,
     );
     await helper.ensureExtensionActive();
@@ -213,7 +228,9 @@ suite("extension", () => {
   });
 
   test("does not sort aliases on save when sortOnSave is disabled", async () => {
-    const { document } = await helper.createTempFile(TEST_DATA.SIMPLE_UNSORTED);
+    const { document } = await helper.createWorkspaceWithFile(
+      TEST_DATA.SIMPLE_UNSORTED,
+    );
 
     await helper.setConfig("sortOnSave", false);
     await helper.ensureExtensionActive();
@@ -224,7 +241,9 @@ suite("extension", () => {
   });
 
   test("sorts aliases on save when sortOnSave is explicitly enabled", async () => {
-    const { document } = await helper.createTempFile(TEST_DATA.SIMPLE_UNSORTED);
+    const { document } = await helper.createWorkspaceWithFile(
+      TEST_DATA.SIMPLE_UNSORTED,
+    );
 
     await helper.setConfig("sortOnSave", true);
     await helper.ensureExtensionActive();

@@ -1,6 +1,21 @@
 import * as vscode from "vscode";
 import sortAliases from "./sort-aliases";
 
+const documentMatchesGlob = (
+  document: vscode.TextDocument,
+  glob: string,
+): boolean => {
+  const folders = vscode.workspace.workspaceFolders;
+  if (folders) {
+    return folders.some((folder) => {
+      const relativePattern = new vscode.RelativePattern(folder, glob);
+      return vscode.languages.match({ pattern: relativePattern }, document) > 0;
+    });
+  } else {
+    return false;
+  }
+};
+
 export function activate(context: vscode.ExtensionContext) {
   const willSaveDisposable = vscode.workspace.onWillSaveTextDocument(
     (event) => {
@@ -13,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       const includeGlob = config.get<string>("includeGlob", "**/*.ex");
-      if (vscode.languages.match({ pattern: includeGlob }, document) === 0) {
+      if (!documentMatchesGlob(document, includeGlob)) {
         return;
       }
 
