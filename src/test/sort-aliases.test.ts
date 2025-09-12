@@ -207,4 +207,78 @@ suite("sortAliases", () => {
     // Should not modify empty multi-alias
     assert.deepStrictEqual(actual, []);
   });
+
+  test("braces in multi-alias should be ignored when sorting (1)", () => {
+    const input = dedent`
+      defmodule MyApp.MyModule do
+          alias MyApp.Fruits.Bananas.Editor
+          alias MyApp.Fruits.{Grapes, Oranges, Peaches}
+      end
+    `;
+
+    const actual = sortAliases(input);
+    // Expect no change since `Bananas` should go before `Grapes`
+    assert.deepStrictEqual(actual, []);
+  });
+
+  test("braces in multi-alias should be ignored when sorting (2)", () => {
+    const input = dedent`
+      defmodule MyApp.MyModule do
+          alias MyApp.Fruits.{Apples, Grapes, Oranges, Peaches}
+          alias MyApp.Fruits.Bananas.Editor
+      end
+    `;
+
+    const actual = sortAliases(input);
+    // Expect no change since `Apples` should go before `Bananas`
+    assert.deepStrictEqual(actual, []);
+  });
+
+  test("alias options should be ignored (1)", () => {
+    const input = dedent`
+      defmodule MyApp.MyModule do
+          alias MyApp.Fruits.Bananas.Editor, as: BananasEditor
+          alias MyApp.Fruits.Bananas.Editor
+      end
+    `;
+
+    const actual = sortAliases(input);
+    assert.deepStrictEqual(actual, []);
+  });
+
+  test("alias options should be ignored (2)", () => {
+    const input = dedent`
+      defmodule MyApp.MyModule do
+          alias MyApp.Fruits.Bananas.Editor
+          alias MyApp.Fruits.Bananas.Editor, as: BananasEditor
+      end
+    `;
+
+    const actual = sortAliases(input);
+    assert.deepStrictEqual(actual, []);
+  });
+
+  test("alias options should be ignored (3)", () => {
+    const input = dedent`
+      defmodule MyApp.MyModule do
+          alias MyApp.Fruits.{Grapes, Oranges, Peaches}
+          alias MyApp.Fruits.{Grapes, Oranges, Peaches}, warn: false
+      end
+    `;
+
+    const actual = sortAliases(input);
+    assert.deepStrictEqual(actual, []);
+  });
+
+  test("alias options should be ignored (4)", () => {
+    const input = dedent`
+      defmodule MyApp.MyModule do
+          alias MyApp.Fruits.{Grapes, Oranges, Peaches}, warn: false
+          alias MyApp.Fruits.{Grapes, Oranges, Peaches}
+      end
+    `;
+
+    const actual = sortAliases(input);
+    assert.deepStrictEqual(actual, []);
+  });
 });

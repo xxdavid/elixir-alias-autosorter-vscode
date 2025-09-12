@@ -11,7 +11,7 @@ Never see _The alias X is not alphabetically ordered among its group_ again!
 - Sorts aliases on demand using the _Sort Elixir Aliases in File_ command
 - Aliases are sorted only among its group (delimited by newlines or non-aliases)
 - Multi-aliases (such as `alias Phoenix.{Controller, PubSub}`) are sorted as well
-- Built to comply with `Credo.Check.Readability.AliasOrder`
+- Built to comply with `Credo.Check.Readability.AliasOrder` (with the default `:alpha` ordering)
 
 ## Configuration
 

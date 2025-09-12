@@ -1,5 +1,12 @@
 import * as vscode from "vscode";
 
+function computeAliasSortKey(line: string): string {
+  // This is quite naive and it keeps only the first nested module in multi-aliases
+  // but it is exactly how Credo does determine the order.
+  // See: https://github.com/rrrene/credo/blob/fdc365baf9b5dab5911585ae5c4bdaea45d3187e/lib/credo/check/readability/alias_order.ex#L242
+  return line.replace(/[\{\}]/, "").replace(/,.+/, "");
+}
+
 function sortMultiAlias(line: string): string {
   // Check if the line contains multi-alias syntax (curly braces)
   const multiAliasMatch = line.match(/^(\s*alias\s+[^{]+\{)([^}]+)(\}.*)/);
@@ -45,11 +52,13 @@ export default function sortAliases(text: string): vscode.TextEdit[] {
           const multiAliasSorted = groupLines.map(sortMultiAlias);
 
           // Then sort the entire group of aliases
-          const sorted = [...multiAliasSorted].sort((a, b) =>
-            a
-              .trim()
-              .localeCompare(b.trim(), undefined, { sensitivity: "accent" }),
-          );
+          const sorted = [...multiAliasSorted].sort((a, b) => {
+            const keyA = computeAliasSortKey(a);
+            const keyB = computeAliasSortKey(b);
+            return keyA.localeCompare(keyB, undefined, {
+              sensitivity: "accent",
+            });
+          });
 
           if (groupLines.join("\n") !== sorted.join("\n")) {
             const start = new vscode.Position(groupStart, 0);
