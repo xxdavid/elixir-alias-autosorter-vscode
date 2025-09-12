@@ -3,7 +3,7 @@
   "publisher": "dpavlik",
   "displayName": "Elixir Alias Autosorter",
   "description": "Automatically sorts aliases in Elixir files on save.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "engines": {
     "vscode": "^1.99.0"
   },

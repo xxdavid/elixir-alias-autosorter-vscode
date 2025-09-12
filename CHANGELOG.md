@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.3 (2025-09-12)
+
+- Trim aliases before sorting
+
 ## 0.1.2 (2025-09-12)
 
 - Fix sorting of multi-aliases mixed with single-aliases (#1)
