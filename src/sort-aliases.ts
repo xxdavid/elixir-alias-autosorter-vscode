@@ -4,7 +4,10 @@ function computeAliasSortKey(line: string): string {
   // This is quite naive and it keeps only the first nested module in multi-aliases
   // but it is exactly how Credo does determine the order.
   // See: https://github.com/rrrene/credo/blob/fdc365baf9b5dab5911585ae5c4bdaea45d3187e/lib/credo/check/readability/alias_order.ex#L242
-  return line.replace(/[\{\}]/, "").replace(/,.+/, "");
+  return line
+    .trim()
+    .replace(/[\{\}]/, "")
+    .replace(/,.+/, "");
 }
 
 function sortMultiAlias(line: string): string {
